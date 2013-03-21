@@ -43,6 +43,6 @@ hdfs-upload-input: hdfs-clean-input
 	hadoop fs -copyFromLocal input/* /user/`whoami`/input
 
 run-ii: InvertedIndex.jar hdfs-clean-output hdfs-clean-input hdfs-upload-input
-	hadoop fs -cat /user/ekoontz/input/InvertedIndex/*
+	hadoop fs -cat /user/`whoami`/input/InvertedIndex/*
 	hadoop jar InvertedIndex.jar com.trendmicro.InvertedIndex input/InvertedIndex output
-	hadoop fs -cat /user/ekoontz/input/InvertedIndex/*
+	hadoop fs -cat /user/`whoami`/output/part-r-00000
