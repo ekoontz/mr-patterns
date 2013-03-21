@@ -1,48 +1,46 @@
 ###################################################################
 #                                                                 #
-# Generic Makefile for Hadoop applications.                       #
+# Chapter 2 of MapReduce Design Patterns example code             #
+#   by Scott Forman                                               #
+# Makefile by Vic Hargrave and Eugene Koontz                      #
 #                                                                 #
-# To adapt for other applications:                                #
-# 1. Create a directory for your application.                     #
-# 2. Set $(SRC) to the list of source files for your project.     #
-# 3. Set $(HADOOP) to point to your HADOOP distribution home      #
-#    directory.                                                   #
-# 4. To make your app type 'make app=<your app name>'             #
+# 1. Set $(HADOOP_HOME) in your environment                       #
+# 2. make clean run-all                                           #
 #                                                                 #
 ###################################################################
 
-# Assumes you have ${HADOOP_INSTALL} defined in your .bash_profile
-HADOOP	= ${HADOOP_INSTALL}/bin/hadoop
+HADOOP = ${HADOOP_HOME}/bin/hadoop
+OUTPUT_PATH = file://`pwd`/output
+INPUT_PATH =  file://`pwd`/input
 
-SRC	= src/$(app).java
-OUT	= out
+.PHONY: clean run-all inverted-index counters average
 
-.PHONY: clean run-ii hdfs-clean hdfs-clean-input hdfs-clean-output hdfs-upload-input
+run-all: inverted-index counters average
 
-$(app): $(SRC)
-	mkdir -p $(OUT)
-	javac -classpath `$(HADOOP) classpath`:./out -d $(OUT) $(SRC)
-	jar -cvf $(app).jar -C $(OUT) .
+inverted-index: chapter2.jar
+	$(HADOOP) fs -cat $(INPUT_PATH)/InvertedIndex/*
+	-$(HADOOP) fs -rm -r $(OUTPUT_PATH)
+	$(HADOOP) jar $< com.trendmicro.InvertedIndex $(INPUT_PATH)/InvertedIndex $(OUTPUT_PATH)
+	$(HADOOP) fs -cat $(OUTPUT_PATH)/part-r-00000
 
-%.jar: src/%.java
-	mkdir -p $(OUT)
-	javac -classpath `$(HADOOP) classpath`:./out -d $(OUT) $^
-	jar -cvf $@ -C $(OUT) .
+counters: chapter2.jar
+	$(HADOOP) fs -cat $(INPUT_PATH)/Counter/*
+	-$(HADOOP) fs -rm -r $(OUTPUT_PATH)
+	$(HADOOP) jar $< com.trendmicro.Counter $(INPUT_PATH)/Counter $(OUTPUT_PATH)
+
+average: chapter2.jar
+	$(HADOOP) fs -cat $(INPUT_PATH)/Average/*
+	-$(HADOOP) fs -rm -r $(OUTPUT_PATH)
+	$(HADOOP) jar $< com.trendmicro.Average $(INPUT_PATH)/Average $(OUTPUT_PATH)
+	$(HADOOP) fs -cat $(OUTPUT_PATH)/part-r-00000
+
+chapter2.jar: src/*.java
+	mkdir -p out
+	javac -classpath `$(HADOOP) classpath`:. -d out $^
+	jar -cvf $@ -C out .
 
 clean:
-	rm -rf  $(OUT)  *.jar 
+	-rm -rf out output *.jar 
 
-hdfs-clean-output:
-	-hadoop fs -rm -r /user/`whoami`/output
 
-hdfs-clean-input:
-	-hadoop fs -rm -r /user/`whoami`/input
 
-hdfs-upload-input: hdfs-clean-input
-	hadoop fs -mkdir /user/`whoami`/input
-	hadoop fs -copyFromLocal input/* /user/`whoami`/input
-
-run-ii: InvertedIndex.jar hdfs-clean-output hdfs-clean-input hdfs-upload-input
-	hadoop fs -cat /user/`whoami`/input/InvertedIndex/*
-	hadoop jar InvertedIndex.jar com.trendmicro.InvertedIndex input/InvertedIndex output
-	hadoop fs -cat /user/`whoami`/output/part-r-00000
