@@ -84,6 +84,5 @@ public class Counter {
 
         int code = job.waitForCompletion(true) ? 0 : 1;
 
-        FileSystem.get(conf).delete(new Path(args[1]), true);
     }
 }
