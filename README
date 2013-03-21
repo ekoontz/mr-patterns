@@ -1,0 +1,9 @@
+Example MapReduce code by Scott Forman
+Makefile by Vic Hargrave and Eugene Koontz
+
+Usage
+
+1. Set $(HADOOP_HOME) in your environment
+2. make clean run-all
+
+
